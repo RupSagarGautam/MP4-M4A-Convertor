@@ -1,13 +1,20 @@
 import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
-from moviepy import VideoFileClip
-from pytube import YouTube
+from moviepy.editor import VideoFileClip
+import yt_dlp
 import os
+import re
 from PIL import Image, ImageTk
 import threading
+import logging
+
+# Configure logging for debugging
+logging.basicConfig(level=logging.DEBUG)
 
 class MP4toM4AConverter:
     def __init__(self, root):
+        # Note: Ensure ffmpeg is in your system PATH. If using a custom ffmpeg path, set the environment variable:
+        # os.environ["FFMPEG_BINARY"] = "path/to/ffmpeg"  # e.g., "C:\\ffmpeg\\bin\\ffmpeg.exe"
         self.root = root
         self.root.title("MP4 & YouTube to M4A Converter")
         self.root.geometry("500x400")
@@ -18,7 +25,7 @@ class MP4toM4AConverter:
         self.style = ttk.Style()
         self.style.configure("TButton", font=("Helvetica", 12), padding=10)
         self.style.configure("TLabel", font=("Helvetica", 10), background="#f0f2f5")
-        
+
         # Create main frame
         self.main_frame = tk.Frame(root, bg="#f0f2f5")
         self.main_frame.pack(expand=True, fill="both", padx=20, pady=20)
@@ -42,7 +49,7 @@ class MP4toM4AConverter:
             fg="#555"
         )
         self.url_label.pack()
-        
+
         self.url_entry = tk.Entry(
             self.main_frame,
             width=50,
@@ -117,6 +124,7 @@ class MP4toM4AConverter:
         self.footer.pack(side="bottom", pady=10)
 
     def convert_to_m4a(self, video_path, is_youtube=False):
+        """Convert an MP4 file to M4A audio format."""
         try:
             self.progress_label.config(text="Converting... Please wait.")
             self.progress_bar.pack()
@@ -137,6 +145,8 @@ class MP4toM4AConverter:
                 self.progress_label.config(text="")
                 messagebox.showerror("Error", "The selected video has no audio track!")
                 return
+
+            # Extract audio
             audio = video.audio
             audio.write_audiofile(m4a_path, codec='aac')
 
@@ -159,31 +169,43 @@ class MP4toM4AConverter:
             self.progress_label.config(text="")
             if is_youtube and os.path.exists(video_path):
                 os.remove(video_path)  # Clean up on error
+            logging.error(f"Conversion error: {str(e)}")
             messagebox.showerror("Error", f"Conversion failed: {str(e)}")
 
     def download_youtube(self):
+        """Download a YouTube video using yt-dlp."""
         url = self.url_entry.get().strip()
         if not url:
             messagebox.showerror("Error", "Please enter a YouTube URL!")
             return None
-        
+
+        # Basic URL validation
+        if not re.match(r'^https?://(www\.)?(youtube\.com|youtu\.be)/.+$', url):
+            messagebox.showerror("Error", "Invalid YouTube URL!")
+            return None
+
         try:
             self.progress_label.config(text="Downloading... Please wait.")
             self.progress_bar.pack()
             self.progress_bar.start()
 
-            # Download YouTube video
-            yt = YouTube(url)
-            # Get the highest quality audio stream (usually mp4 with audio)
-            stream = yt.streams.filter(only_audio=True, file_extension='mp4').first()
-            if not stream:
-                stream = yt.streams.filter(file_extension='mp4').first()
-                if not stream:
-                    raise Exception("No suitable stream found!")
-            
-            # Download to a temporary file
-            temp_file = stream.download(output_path=".", filename="temp_video.mp4")
-            
+            # Clean up any existing temp file
+            if os.path.exists("temp_video.mp4"):
+                os.remove("temp_video.mp4")
+
+            # yt-dlp options for video+audio
+            ydl_opts = {
+                'format': 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]',  # Merge video and audio
+                'outtmpl': 'temp_video.mp4',
+                'quiet': True,
+                'merge_output_format': 'mp4',  # Ensure output is MP4
+            }
+
+            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                ydl.download([url])
+
+            temp_file = "temp_video.mp4"
+
             self.progress_bar.stop()
             self.progress_bar.pack_forget()
             self.progress_label.config(text="")
@@ -193,10 +215,12 @@ class MP4toM4AConverter:
             self.progress_bar.stop()
             self.progress_bar.pack_forget()
             self.progress_label.config(text="")
+            logging.error(f"Download error: {str(e)}")
             messagebox.showerror("Error", f"Download failed: {str(e)}")
             return None
 
     def select_file(self):
+        """Select a local MP4 file for conversion."""
         video_path = filedialog.askopenfilename(
             title="Select MP4 Video",
             filetypes=[("MP4 files", "*.mp4")]
@@ -205,14 +229,15 @@ class MP4toM4AConverter:
             self.convert_to_m4a(video_path, is_youtube=False)
 
     def start_conversion_thread(self):
-        # Run local file conversion in a separate thread
+        """Run local file conversion in a separate thread."""
         threading.Thread(target=self.select_file, daemon=True).start()
 
     def start_youtube_thread(self):
-        # Run YouTube download and conversion in a separate thread
+        """Run YouTube download and conversion in a separate thread."""
         threading.Thread(target=self.process_youtube, daemon=True).start()
 
     def process_youtube(self):
+        """Process YouTube video: download and convert to M4A."""
         temp_file = self.download_youtube()
         if temp_file:
             self.convert_to_m4a(temp_file, is_youtube=True)
