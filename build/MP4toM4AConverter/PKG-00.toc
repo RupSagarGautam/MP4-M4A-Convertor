@@ -1,0 +1,72 @@
+('D:\\Projects\\MP4-M4A '
+ 'Convertor\\build\\MP4toM4AConverter\\MP4toM4AConverter.pkg',
+ {'BINARY': True,
+  'DATA': True,
+  'EXECUTABLE': True,
+  'EXTENSION': True,
+  'PYMODULE': True,
+  'PYSOURCE': True,
+  'PYZ': False,
+  'SPLASH': True,
+  'SYMLINK': False},
+ [('pyi-contents-directory _internal', '', 'OPTION'),
+  ('PYZ-00.pyz',
+   'D:\\Projects\\MP4-M4A Convertor\\build\\MP4toM4AConverter\\PYZ-00.pyz',
+   'PYZ'),
+  ('struct',
+   'D:\\Projects\\MP4-M4A '
+   'Convertor\\build\\MP4toM4AConverter\\localpycs\\struct.pyc',
+   'PYMODULE'),
+  ('pyimod01_archive',
+   'D:\\Projects\\MP4-M4A '
+   'Convertor\\build\\MP4toM4AConverter\\localpycs\\pyimod01_archive.pyc',
+   'PYMODULE'),
+  ('pyimod02_importers',
+   'D:\\Projects\\MP4-M4A '
+   'Convertor\\build\\MP4toM4AConverter\\localpycs\\pyimod02_importers.pyc',
+   'PYMODULE'),
+  ('pyimod03_ctypes',
+   'D:\\Projects\\MP4-M4A '
+   'Convertor\\build\\MP4toM4AConverter\\localpycs\\pyimod03_ctypes.pyc',
+   'PYMODULE'),
+  ('pyimod04_pywin32',
+   'D:\\Projects\\MP4-M4A '
+   'Convertor\\build\\MP4toM4AConverter\\localpycs\\pyimod04_pywin32.pyc',
+   'PYMODULE'),
+  ('pyiboot01_bootstrap',
+   'd:\\Projects\\MP4-M4A '
+   'Convertor\\.venv\\Lib\\site-packages\\PyInstaller\\loader\\pyiboot01_bootstrap.py',
+   'PYSOURCE'),
+  ('pyi_rth_inspect',
+   'D:\\Projects\\MP4-M4A '
+   'Convertor\\.venv\\Lib\\site-packages\\PyInstaller\\hooks\\rthooks\\pyi_rth_inspect.py',
+   'PYSOURCE'),
+  ('pyi_rth_pkgres',
+   'D:\\Projects\\MP4-M4A '
+   'Convertor\\.venv\\Lib\\site-packages\\PyInstaller\\hooks\\rthooks\\pyi_rth_pkgres.py',
+   'PYSOURCE'),
+  ('pyi_rth_setuptools',
+   'D:\\Projects\\MP4-M4A '
+   'Convertor\\.venv\\Lib\\site-packages\\PyInstaller\\hooks\\rthooks\\pyi_rth_setuptools.py',
+   'PYSOURCE'),
+  ('pyi_rth_multiprocessing',
+   'D:\\Projects\\MP4-M4A '
+   'Convertor\\.venv\\Lib\\site-packages\\PyInstaller\\hooks\\rthooks\\pyi_rth_multiprocessing.py',
+   'PYSOURCE'),
+  ('pyi_rth_pkgutil',
+   'D:\\Projects\\MP4-M4A '
+   'Convertor\\.venv\\Lib\\site-packages\\PyInstaller\\hooks\\rthooks\\pyi_rth_pkgutil.py',
+   'PYSOURCE'),
+  ('pyi_rth__tkinter',
+   'D:\\Projects\\MP4-M4A '
+   'Convertor\\.venv\\Lib\\site-packages\\PyInstaller\\hooks\\rthooks\\pyi_rth__tkinter.py',
+   'PYSOURCE'),
+  ('convertor', 'D:\\Projects\\MP4-M4A Convertor\\convertor.py', 'PYSOURCE')],
+ 'python312.dll',
+ True,
+ False,
+ False,
+ [],
+ None,
+ None,
+ None)

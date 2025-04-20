@@ -4,6 +4,8 @@ from moviepy.editor import VideoFileClip
 import yt_dlp
 import os
 import re
+import sys
+import subprocess
 from PIL import Image, ImageTk
 import threading
 import logging
@@ -13,8 +15,13 @@ logging.basicConfig(level=logging.DEBUG)
 
 class MP4toM4AConverter:
     def __init__(self, root):
-        # Note: Ensure ffmpeg is in your system PATH. If using a custom ffmpeg path, set the environment variable:
-        # os.environ["FFMPEG_BINARY"] = "path/to/ffmpeg"  # e.g., "C:\\ffmpeg\\bin\\ffmpeg.exe"
+        # Dynamically set FFmpeg path to the bundled ffmpeg.exe
+        ffmpeg_path = os.path.join(os.path.dirname(sys.executable), "ffmpeg.exe")
+        if os.path.exists(ffmpeg_path):
+            os.environ["FFMPEG_BINARY"] = ffmpeg_path
+        else:
+            messagebox.showwarning("FFmpeg Not Found", "FFmpeg is required for conversion. Please ensure ffmpeg.exe is in the application directory.")
+
         self.root = root
         self.root.title("MP4 & YouTube to M4A Converter")
         self.root.geometry("500x400")
