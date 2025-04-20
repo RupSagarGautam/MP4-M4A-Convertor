@@ -124,15 +124,34 @@ class MP4toM4AConverter:
         self.footer.pack(side="bottom", pady=10)
 
     def convert_to_m4a(self, video_path, is_youtube=False):
-        """Convert an MP4 file to M4A audio format."""
+        """Convert an MP4 file to M4A audio format with user-specified save location."""
         try:
             self.progress_label.config(text="Converting... Please wait.")
             self.progress_bar.pack()
             self.progress_bar.start()
 
-            # Extract filename and create m4a path
-            base = os.path.splitext(video_path)[0]
-            m4a_path = base + ".m4a"
+            # Get the base filename (without path or extension) for the default save name
+            base_filename = os.path.splitext(os.path.basename(video_path))[0]
+            default_save_name = f"{base_filename}.m4a"
+
+            # Open "Save As" dialog to let user choose the output path
+            m4a_path = filedialog.asksaveasfilename(
+                title="Save M4A As",
+                defaultextension=".m4a",
+                filetypes=[("M4A files", "*.m4a"), ("All files", "*.*")],
+                initialfile=default_save_name,
+                initialdir=os.path.dirname(video_path)  # Start in the same directory as the input file
+            )
+
+            # If user cancels the dialog, stop the process
+            if not m4a_path:
+                self.progress_bar.stop()
+                self.progress_bar.pack_forget()
+                self.progress_label.config(text="")
+                if is_youtube:
+                    os.remove(video_path)  # Clean up temporary file
+                messagebox.showinfo("Cancelled", "Conversion cancelled by user.")
+                return
 
             # Load video and extract audio
             video = VideoFileClip(video_path)
@@ -146,7 +165,7 @@ class MP4toM4AConverter:
                 messagebox.showerror("Error", "The selected video has no audio track!")
                 return
 
-            # Extract audio
+            # Extract audio and save to user-specified path
             audio = video.audio
             audio.write_audiofile(m4a_path, codec='aac')
 
