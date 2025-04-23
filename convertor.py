@@ -15,16 +15,17 @@ logging.basicConfig(level=logging.DEBUG)
 
 class MP4toM4AConverter:
     def __init__(self, root):
-        # Dynamically set FFmpeg path to the bundled ffmpeg.exe
-        ffmpeg_path = os.path.join(os.path.dirname(sys.executable), "ffmpeg.exe")
+        # Set FFmpeg path relative to the script's directory
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        ffmpeg_path = os.path.join(script_dir, "ffmpeg.exe")
         if os.path.exists(ffmpeg_path):
             os.environ["FFMPEG_BINARY"] = ffmpeg_path
         else:
-            messagebox.showwarning("FFmpeg Not Found", "FFmpeg is required for conversion. Please ensure ffmpeg.exe is in the application directory.")
+            messagebox.showwarning("FFmpeg Not Found", "FFmpeg is required for conversion. Please ensure ffmpeg.exe is in the script directory.")
 
         self.root = root
         self.root.title("MP4 & YouTube to M4A Converter")
-        self.root.geometry("500x400")
+        self.root.geometry("500x450")
         self.root.resizable(False, False)
         self.root.configure(bg="#f0f2f5")
 
@@ -47,10 +48,10 @@ class MP4toM4AConverter:
         )
         self.header.pack(pady=(0, 20))
 
-        # YouTube URL input
+        # URL input
         self.url_label = tk.Label(
             self.main_frame,
-            text="Enter YouTube URL:",
+            text="Enter Video URL:",
             font=("Helvetica", 10),
             bg="#f0f2f5",
             fg="#555"
@@ -63,6 +64,24 @@ class MP4toM4AConverter:
             font=("Helvetica", 10)
         )
         self.url_entry.pack(pady=5)
+
+        # Download Video button with hover effect
+        self.btn_download_video = tk.Button(
+            self.main_frame,
+            text="Download Video",
+            command=self.start_download_thread,
+            font=("Helvetica", 12),
+            bg="#FF9800",
+            fg="white",
+            activebackground="#F57C00",
+            activeforeground="white",
+            relief="flat",
+            padx=20,
+            pady=10
+        )
+        self.btn_download_video.pack(pady=10)
+        self.btn_download_video.bind("<Enter>", lambda e: self.btn_download_video.config(bg="#F57C00"))
+        self.btn_download_video.bind("<Leave>", lambda e: self.btn_download_video.config(bg="#FF9800"))
 
         # Download & Convert button with hover effect
         self.btn_download = tk.Button(
@@ -118,7 +137,7 @@ class MP4toM4AConverter:
             length=300
         )
         self.progress_bar.pack(pady=10)
-        self.progress_bar.pack_forget()  # Hidden initially
+        self.progress_bar.pack_forget()
 
         # Footer
         self.footer = tk.Label(
@@ -129,6 +148,67 @@ class MP4toM4AConverter:
             fg="#777"
         )
         self.footer.pack(side="bottom", pady=10)
+
+    def download_from_internet(self):
+        """Download a video from the internet using yt-dlp to a user-specified location."""
+        url = self.url_entry.get().strip()
+        if not url:
+            messagebox.showerror("Error", "Please enter a video URL!")
+            return
+
+        # Basic URL validation (ensure it's a valid URL format)
+        if not re.match(r'^https?://.+$', url):
+            messagebox.showerror("Error", "Invalid URL format!")
+            return
+
+        try:
+            self.progress_label.config(text="Downloading... Please wait.")
+            self.progress_bar.pack()
+            self.progress_bar.start()
+
+            # Get default filename from yt-dlp
+            with yt_dlp.YoutubeDL({'quiet': True}) as ydl:
+                info = ydl.extract_info(url, download=False)
+                default_filename = ydl.prepare_filename(info).replace('.webm', '.mp4').replace('.m4a', '.mp4')
+
+            # Open "Save As" dialog
+            save_path = filedialog.asksaveasfilename(
+                title="Save Video As",
+                defaultextension=".mp4",
+                filetypes=[("MP4 files", "*.mp4"), ("All files", "*.*")],
+                initialfile=os.path.basename(default_filename),
+                initialdir=os.path.dirname(default_filename) if os.path.dirname(default_filename) else os.getcwd()
+            )
+
+            if not save_path:
+                self.progress_bar.stop()
+                self.progress_bar.pack_forget()
+                self.progress_label.config(text="")
+                messagebox.showinfo("Cancelled", "Download cancelled by user.")
+                return
+
+            # yt-dlp options for video+audio
+            ydl_opts = {
+                'format': 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]',
+                'outtmpl': save_path,
+                'quiet': True,
+                'merge_output_format': 'mp4',
+            }
+
+            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                ydl.download([url])
+
+            self.progress_bar.stop()
+            self.progress_bar.pack_forget()
+            self.progress_label.config(text="")
+            messagebox.showinfo("Success", f"Video saved as:\n{save_path}")
+
+        except Exception as e:
+            self.progress_bar.stop()
+            self.progress_bar.pack_forget()
+            self.progress_label.config(text="")
+            logging.error(f"Download error: {str(e)}")
+            messagebox.showerror("Error", f"Download failed: {str(e)}")
 
     def convert_to_m4a(self, video_path, is_youtube=False):
         """Convert an MP4 file to M4A audio format with user-specified save location."""
@@ -147,7 +227,7 @@ class MP4toM4AConverter:
                 defaultextension=".m4a",
                 filetypes=[("M4A files", "*.m4a"), ("All files", "*.*")],
                 initialfile=default_save_name,
-                initialdir=os.path.dirname(video_path)  # Start in the same directory as the input file
+                initialdir=os.path.dirname(video_path)
             )
 
             # If user cancels the dialog, stop the process
@@ -156,7 +236,7 @@ class MP4toM4AConverter:
                 self.progress_bar.pack_forget()
                 self.progress_label.config(text="")
                 if is_youtube:
-                    os.remove(video_path)  # Clean up temporary file
+                    os.remove(video_path)
                 messagebox.showinfo("Cancelled", "Conversion cancelled by user.")
                 return
 
@@ -165,7 +245,7 @@ class MP4toM4AConverter:
             if video.audio is None:
                 video.close()
                 if is_youtube:
-                    os.remove(video_path)  # Clean up temporary file
+                    os.remove(video_path)
                 self.progress_bar.stop()
                 self.progress_bar.pack_forget()
                 self.progress_label.config(text="")
@@ -194,7 +274,7 @@ class MP4toM4AConverter:
             self.progress_bar.pack_forget()
             self.progress_label.config(text="")
             if is_youtube and os.path.exists(video_path):
-                os.remove(video_path)  # Clean up on error
+                os.remove(video_path)
             logging.error(f"Conversion error: {str(e)}")
             messagebox.showerror("Error", f"Conversion failed: {str(e)}")
 
@@ -221,10 +301,10 @@ class MP4toM4AConverter:
 
             # yt-dlp options for video+audio
             ydl_opts = {
-                'format': 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]',  # Merge video and audio
+                'format': 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]',
                 'outtmpl': 'temp_video.mp4',
                 'quiet': True,
-                'merge_output_format': 'mp4',  # Ensure output is MP4
+                'merge_output_format': 'mp4',
             }
 
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
@@ -261,6 +341,10 @@ class MP4toM4AConverter:
     def start_youtube_thread(self):
         """Run YouTube download and conversion in a separate thread."""
         threading.Thread(target=self.process_youtube, daemon=True).start()
+
+    def start_download_thread(self):
+        """Run video download in a separate thread."""
+        threading.Thread(target=self.download_from_internet, daemon=True).start()
 
     def process_youtube(self):
         """Process YouTube video: download and convert to M4A."""
