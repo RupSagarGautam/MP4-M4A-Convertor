@@ -1,6 +1,6 @@
 import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
-from moviepy.editor import VideoFileClip
+from moviepy import VideoFileClip
 import yt_dlp
 import os
 import re
