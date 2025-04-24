@@ -15,13 +15,20 @@ logging.basicConfig(level=logging.DEBUG)
 
 class MP4toM4AConverter:
     def __init__(self, root):
-        # Set FFmpeg path relative to the script's directory
-        script_dir = os.path.dirname(os.path.abspath(__file__))
+        # Dynamically determine the base path for the script or executable
+        if getattr(sys, 'frozen', False):
+            # If running as a bundled executable (PyInstaller)
+            script_dir = os.path.dirname(sys.executable)
+        else:
+            # If running as a script
+            script_dir = os.path.dirname(os.path.abspath(__file__))
+
+        # Set FFmpeg path relative to the script's or executable's directory
         ffmpeg_path = os.path.join(script_dir, "ffmpeg.exe")
         if os.path.exists(ffmpeg_path):
             os.environ["FFMPEG_BINARY"] = ffmpeg_path
         else:
-            messagebox.showwarning("FFmpeg Not Found", "FFmpeg is required for conversion. Please ensure ffmpeg.exe is in the script directory.")
+            messagebox.showwarning("FFmpeg Not Found", "FFmpeg is required for conversion. Please ensure ffmpeg.exe is in the application directory.")
 
         self.root = root
         self.root.title("MP4 & YouTube to M4A Converter")
