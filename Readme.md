@@ -1,2 +1,4 @@
 ﻿# MP4-M4A-Convertor
-### To Download and Install Open App Folder and Run MP4toM4AConverter.exe as administrator
+### To Run: 
+#### Download App Folder and Run MP4toM4AConverter.exe as administrator 
+#### including ffmpeg.exe in the directory.
